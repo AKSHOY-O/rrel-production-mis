@@ -1,0 +1,39 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      MIS_TIMEZONE: ${MIS_TIMEZONE:-Asia/Kolkata}
+      MIS_PUBLIC_ORIGIN: https://${MIS_DOMAIN}
+      MIS_SECURE_COOKIES: "1"
+    volumes:
+      - rrel_data:/app/data
+    networks:
+      - internal
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      MIS_DOMAIN: ${MIS_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - internal
+
+networks:
+  internal:
+
+volumes:
+  rrel_data:
+  caddy_data:
+  caddy_config:
